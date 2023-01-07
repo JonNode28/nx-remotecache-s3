@@ -7,7 +7,7 @@ import mkdirp from 'mkdirp';
 import { default as getStream } from 'get-stream'
 import { ProviderError } from "@aws-sdk/property-provider";
 import {FromIniInit} from "@aws-sdk/credential-providers/dist-types/fromIni";
-import {S3ClientConfig} from "@aws-sdk/client-s3/S3Client";
+import {S3ClientConfig} from "@aws-sdk/client-s3";
 
 export default function runner(
     tasks: Parameters<typeof defaultTaskRunner>[0],
