@@ -1,5 +1,9 @@
 # nx-remotecache-s3
 
+> This repo is forked from https://github.com/manfredsteyer/nx-remotecache-s3 and allows:
+> * The full range of ini credential options and
+> * The credentials s3 option to be omitted completely allowing the SDK to use temporary credentials available during a CodeBuild build
+
 A task runner for [@nrwl/nx](https://nx.dev/react) that uses an Amazon S3 bucket as a remote cache, so all team members and CI servers can share a single cache. The concept and benefits of [computation caching](https://nx.dev/angular/guides/computation-caching) are explained in the NX documentation. This is a fork of [nx-remotecache-gcs](https://github.com/wvanderdeijl/nx-remotecache-gcs).
 
 ## Setup
