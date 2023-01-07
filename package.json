@@ -26,8 +26,7 @@
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.6.1",
-        "@aws-sdk/credential-provider-env": "^3.6.1",
-        "@aws-sdk/credential-provider-ini": "^3.6.1",
+        "@aws-sdk/credential-providers": "^3.245.0",
         "@types/mkdirp": "^1.0.1",
         "get-stream": "^6.0.0",
         "mkdirp": "^1.0.4"

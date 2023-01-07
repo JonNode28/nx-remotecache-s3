@@ -1,31 +1,48 @@
 import defaultTaskRunner from '@nrwl/workspace/tasks-runners/default';
 import { S3 } from '@aws-sdk/client-s3';
-import { fromIni } from '@aws-sdk/credential-provider-ini';
-import { fromEnv, ENV_KEY, ENV_SECRET } from '@aws-sdk/credential-provider-env';
+import { fromIni, fromEnv } from '@aws-sdk/credential-providers';
 import { join, dirname, relative } from 'path';
 import { promises, readFileSync } from 'fs';
 import mkdirp from 'mkdirp';
 import { default as getStream } from 'get-stream'
 import { ProviderError } from "@aws-sdk/property-provider";
+import {FromIniInit} from "@aws-sdk/credential-providers/dist-types/fromIni";
+import {S3ClientConfig} from "@aws-sdk/client-s3/S3Client";
 
 export default function runner(
     tasks: Parameters<typeof defaultTaskRunner>[0],
-    options: Parameters<typeof defaultTaskRunner>[1] & { bucket?: string, profile?: string, region?: string, fromEnv: boolean},
+    options: Parameters<typeof defaultTaskRunner>[1] & {
+        bucket?: string,
+        profile?: string,
+        region?: string,
+        credentials?: {
+            type: 'ENV' | 'INI',
+            options?: FromIniInit
+        }
+    },
     context: Parameters<typeof defaultTaskRunner>[2],
 ) {
     if (!options.bucket) {
         throw new Error('missing bucket property in runner options. Please update nx.json');
     }
 
-    const areCredentialsInEnv = Boolean(process.env[ENV_KEY] && process.env[ENV_SECRET]);
-    console.log('>>>> Credentials from env?', areCredentialsInEnv);
-
-    const s3 = new S3({
+    const s3Config: S3ClientConfig = {
         region: options.region ?? 'us-east-1',
-        credentials: areCredentialsInEnv ? fromEnv() : fromIni({
-            profile: options.profile,
-        })
-    });
+    }
+
+    if(options.credentials){
+        switch(options.credentials.type){
+            case 'ENV':
+                s3Config.credentials = fromEnv()
+                break;
+            case 'INI':
+                s3Config.credentials = fromIni(options.credentials.options)
+                break;
+            default: throw new Error(`'${options.credentials.type}' is not an implemented credential provider. Please consider adding support and raising a PR.`)
+        }
+    }
+
+    const s3 = new S3(s3Config)
 
     process.on('unhandledRejection', () => {});
     process.on('rejectionHandled', () => {});
@@ -40,7 +57,7 @@ export default function runner(
                     Bucket: options.bucket,
                     Key: `${hash}.commit`,
                 });
-            } catch (e) {
+            } catch (e: any) {
                 if (e.name === 'NotFound') {
                     return false;
                 } else if (e instanceof ProviderError) {
@@ -67,7 +84,7 @@ export default function runner(
             await download(commitFile); // commit file after we're sure all content is downloaded
             console.log(`retrieved ${files.length + 1} files from cache s3://${options.bucket}/${hash}`);
             return true;
-        } catch (e) {
+        } catch (e: any) {
             console.log(e);
             console.log(`WARNING: failed to download cache from ${options.bucket}: ${e.message}`);
             return false;
@@ -105,7 +122,7 @@ export default function runner(
             });
             console.log(`stored ${tasks.length + 1} files in cache s3://${options.bucket}/${hash}`);
             return true;
-        } catch (e) {
+        } catch (e: any) {
             console.log(`WARNING: failed to upload cache to ${options.bucket}: ${e.message}`);
             return false;
         }
